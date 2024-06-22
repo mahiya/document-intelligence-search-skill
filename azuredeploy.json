@@ -1,0 +1,181 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "variables": {
+    "resourcePostfix": "[uniqueString(resourceGroup().id, deployment().name)]",
+    "storageAccountName": "[concat('str', variables('resourcePostfix'))]",
+    "storageAccountType": "Standard_LRS",
+    "applicationInsightsName": "[concat('appi-', variables('resourcePostfix'))]",
+    "appPlanName": "[concat('asp-', variables('resourcePostfix'))]",
+    "functionAppName": "[concat('func-', variables('resourcePostfix'))]",
+    "linuxFxVersion": "PYTHON|3.11",
+    "zipFileUrl": "https://github.com/mahiya/document-intelligence-search-skill/raw/main/package/functionapp.zip",
+    "branch": "main"
+  },
+  "parameters": {
+    "documentIntelligenceEndpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "使用する Azure Document Intelligence アカウントのエンドポイント"
+      }
+    },
+    "documentIntelligenceKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "使用する Azure Document Intelligence アカウントのキー"
+      }
+    },
+    "maxChunkTokenSize": {
+      "type": "int",
+      "defaultValue": 4096,
+      "metadata": {
+        "description": "チャンク分割における各チャンクの最大トークン数"
+      }
+    },
+    "overlapTokenSize": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "チャンク分割におけるオーバラップする最大トークン数"
+      }
+    },
+    "overlapType": {
+      "type": "string",
+      "defaultValue": "NONE",
+      "allowedValues": [
+        "NONE",
+        "PREPOST",
+        "PRE",
+        "POST"
+      ],
+      "metadata": {
+        "description": "チャンク分割におけるオーバラップする最大トークン数"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "defaultToOAuthAuthentication": true
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2015-05-01",
+      "name": "[variables('applicationInsightsName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ApplicationId": "[variables('applicationInsightsName')]",
+        "Request_Source": "IbizaWebAppExtensionCreate"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('appPlanName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('functionAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp,linux",
+      "properties": {
+        "reserved": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appPlanName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "[variables('linuxFxVersion')]",
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components', variables('applicationInsightsName')), '2015-05-01').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('microsoft.insights/components', variables('applicationInsightsName')), '2015-05-01').ConnectionString]"
+            },
+            {
+              "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+              "value": "~2"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-09-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "python"
+            },
+            {
+              "name": "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT",
+              "value": "[parameters('documentIntelligenceEndpoint')]"
+            },
+            {
+              "name": "AZURE_DOCUMENT_INTELLIGENCE_KEY",
+              "value": "[parameters('documentIntelligenceKey')]"
+            },
+            {
+              "name": "MAX_CHUNK_TOKEN_SIZE",
+              "value": "[parameters('maxChunkTokenSize')]"
+            },
+            {
+              "name": "OVERLAP_TOKEN_SIZE",
+              "value": "[parameters('overlapTokenSize')]"
+            },
+            {
+              "name": "OVERLAP_TYPE",
+              "value": "[parameters('overlapType')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "apiVersion": "2021-02-01",
+          "name": "ZipDeploy",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+          ],
+          "properties": {
+            "packageUri": "[variables('zipFileUrl')]"
+          }
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('appPlanName'))]"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+    "name": "document-split-skill",
+    "skills": [
+        {
+            "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+            "uri": "{{ Azure Functions にデプロイしたカスタムスキルのエンドポイント }}",
+            "batchSize": 1,
+            "timeout": "PT230S",
+            "inputs": [
+                {
+                    "name": "metadata_storage_path",
+                    "source": "/document/metadata_storage_path"
+                },
+                {
+                    "name": "metadata_storage_sas_token",
+                    "source": "/document/metadata_storage_sas_token"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "output",
+                    "targetName": "processed"
+                }
+            ]
+        },
+        {
+            "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
+            "context": "/document/processed/*",
+            "resourceUri": "{{ 使用する Azure OpenAI Service のエンドポイント }}",
+            "apiKey": "{{ 使用する Azure OpenAI Service のキー }}",
+            "deploymentId": "text-embedding-3-large",
+            "modelName": "text-embedding-3-large",
+            "inputs": [
+                {
+                    "name": "text",
+                    "source": "/document/processed/*/content"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "embedding",
+                    "targetName": "vector"
+                }
+            ]
+        }
+    ],
+    "indexProjections": {
+        "selectors": [
+            {
+                "targetIndexName": "test-index",
+                "parentKeyFieldName": "parentKey",
+                "sourceContext": "/document/processed/*",
+                "mappings": [
+                    {
+                        "name": "content",
+                        "source": "/document/processed/*/content"
+                    },
+                    {
+                        "name": "vector",
+                        "source": "/document/processed/*/vector"
+                    },
+                    {
+                        "name": "fileName",
+                        "source": "/document/metadata_storage_name"
+                    }
+                ]
+            }
+        ],
+        "parameters": {
+            "projectionMode": "skipIndexingParentDocuments"
+        }
+    }
+}

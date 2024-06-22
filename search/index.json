@@ -1,0 +1,99 @@
+{
+  "name": "blob-search-index",
+  "fields": [
+    {
+      "name": "id",
+      "type": "Edm.String",
+      "key": true,
+      "searchable": true,
+      "filterable": false,
+      "sortable": false,
+      "facetable": false,
+      "analyzer": "keyword"
+    },
+    {
+      "name": "parentKey",
+      "type": "Edm.String",
+      "searchable": false,
+      "filterable": true,
+      "sortable": false,
+      "facetable": false
+    },
+    {
+      "name": "fileName",
+      "type": "Edm.String",
+      "searchable": false,
+      "filterable": true,
+      "sortable": false,
+      "facetable": true
+    },
+    {
+      "name": "content",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "sortable": false,
+      "facetable": false,
+      "analyzer": "ja.lucene"
+    },
+    {
+      "name": "vector",
+      "type": "Collection(Edm.Single)",
+      "searchable": true,
+      "stored": false,
+      "dimensions": 3072,
+      "vectorSearchProfile": "vectorProfile"
+    }
+  ],
+  "semantic": {
+    "defaultConfiguration": "semanticConfig",
+    "configurations": [
+      {
+        "name": "semanticConfig",
+        "prioritizedFields": {
+          "titleField": {
+            "fieldName": "fileName"
+          },
+          "prioritizedContentFields": [
+            {
+              "fieldName": "content"
+            }
+          ],
+          "prioritizedKeywordsFields": []
+        }
+      }
+    ]
+  },
+  "vectorSearch": {
+    "algorithms": [
+      {
+        "name": "hnsw",
+        "kind": "hnsw"
+      }
+    ],
+    "vectorizers": [
+      {
+        "name": "azureOpenAI",
+        "kind": "azureOpenAI",
+        "azureOpenAIParameters": {
+          "resourceUri": "{{ 使用する Azure OpenAI Service のエンドポイント }}",
+          "apiKey": "{{ 使用する Azure OpenAI Service のキー }}",
+          "deploymentId": "text-embedding-3-large",
+          "modelName": "text-embedding-3-large"
+        }
+      }
+    ],
+    "profiles": [
+      {
+        "name": "vectorProfile",
+        "algorithm": "hnsw",
+        "vectorizer": "azureOpenAI"
+      }
+    ]
+  },
+  "similarity": {
+    "@odata.type": "#Microsoft.Azure.Search.BM25Similarity",
+    "k1": 1.2,
+    "b": 0.75
+  }
+}

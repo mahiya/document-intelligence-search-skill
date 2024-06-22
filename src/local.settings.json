@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT": "https://xxx.cognitiveservices.azure.com/",
+    "AZURE_DOCUMENT_INTELLIGENCE_KEY": "",
+    "AZURE_DOCUMENT_INTELLIGENCE_MODEL": "prebuilt-layout",
+    "AZURE_DOCUMENT_INTELLIGENCE_LOCALE": "ja-JP",
+    "MAX_CHUNK_TOKEN_SIZE": 4096,
+    "OVERLAP_TOKEN_SIZE": 0,
+    "OVERLAP_TYPE": "NONE"
+  }
+}

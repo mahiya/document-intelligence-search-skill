@@ -1,0 +1,10 @@
+{
+    "name": "blob-source",
+    "type": "azureblob",
+    "credentials": {
+        "connectionString": "{{使用する Azure Blob Storage の接続文字列}}"
+    },
+    "container": {
+        "name": "{{使用する Azure Blob Storage のコンテナ名}}"
+    }
+}

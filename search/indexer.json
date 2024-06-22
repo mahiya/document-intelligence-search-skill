@@ -1,0 +1,15 @@
+{
+    "name": "blob-source-indexer",
+    "targetIndexName": "blob-search-index",
+    "dataSourceName": "blob-source",
+    "skillsetName": "document-split-skill",
+    "parameters": {
+        "configuration": {
+            "dataToExtract": "storageMetadata",
+            "parsingMode": "default",
+            "indexedFileNameExtensions": ".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls"
+        }
+    },
+    "fieldMappings": [],
+    "outputFieldMappings": []
+}
