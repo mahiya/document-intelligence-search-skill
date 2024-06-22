@@ -7,7 +7,7 @@
         "configuration": {
             "dataToExtract": "storageMetadata",
             "parsingMode": "default",
-            "indexedFileNameExtensions": ".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls"
+            "indexedFileNameExtensions": ".pdf, .docx, .doc, .pptx, .ppt, .xlsx, .xls"
         }
     },
     "fieldMappings": [],

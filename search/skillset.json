@@ -47,7 +47,7 @@
     "indexProjections": {
         "selectors": [
             {
-                "targetIndexName": "test-index",
+                "targetIndexName": "blob-search-index",
                 "parentKeyFieldName": "parentKey",
                 "sourceContext": "/document/processed/*",
                 "mappings": [
