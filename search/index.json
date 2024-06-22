@@ -78,7 +78,7 @@
         "azureOpenAIParameters": {
           "resourceUri": "{{ 使用する Azure OpenAI Service のエンドポイント }}",
           "apiKey": "{{ 使用する Azure OpenAI Service のキー }}",
-          "deploymentId": "text-embedding-3-large",
+          "deploymentId": "{{ 使用する Azure OpenAI Service のデプロイ名 }}",
           "modelName": "text-embedding-3-large"
         }
       }
