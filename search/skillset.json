@@ -19,13 +19,13 @@
             "outputs": [
                 {
                     "name": "output",
-                    "targetName": "processed"
+                    "targetName": "chunks"
                 }
             ]
         },
         {
             "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
-            "context": "/document/processed/*",
+            "context": "/document/chunks/*",
             "resourceUri": "{{ 使用する Azure OpenAI Service のエンドポイント }}",
             "apiKey": "{{ 使用する Azure OpenAI Service のキー }}",
             "deploymentId": "text-embedding-3-large",
@@ -33,7 +33,7 @@
             "inputs": [
                 {
                     "name": "text",
-                    "source": "/document/processed/*/content"
+                    "source": "/document/chunks/*/content"
                 }
             ],
             "outputs": [
@@ -49,15 +49,15 @@
             {
                 "targetIndexName": "blob-search-index",
                 "parentKeyFieldName": "parentKey",
-                "sourceContext": "/document/processed/*",
+                "sourceContext": "/document/chunks/*",
                 "mappings": [
                     {
                         "name": "content",
-                        "source": "/document/processed/*/content"
+                        "source": "/document/chunks/*/content"
                     },
                     {
                         "name": "vector",
-                        "source": "/document/processed/*/vector"
+                        "source": "/document/chunks/*/vector"
                     },
                     {
                         "name": "fileName",
