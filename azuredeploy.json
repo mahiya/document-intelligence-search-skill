@@ -3,7 +3,8 @@
   "contentVersion": "1.0.0.0",
   "variables": {
     "resourcePostfix": "[uniqueString(resourceGroup().id, deployment().name)]",
-    "storageAccountName": "[concat('str', variables('resourcePostfix'))]",
+    "documentIntelligenceName": "[concat('di-', variables('resourcePostfix'))]",
+    "storageAccountName": "[concat('st', variables('resourcePostfix'))]",
     "storageAccountType": "Standard_LRS",
     "applicationInsightsName": "[concat('appi-', variables('resourcePostfix'))]",
     "appPlanName": "[concat('asp-', variables('resourcePostfix'))]",
@@ -13,18 +14,6 @@
     "branch": "main"
   },
   "parameters": {
-    "documentIntelligenceEndpoint": {
-      "type": "string",
-      "metadata": {
-        "description": "使用する Azure Document Intelligence アカウントのエンドポイント"
-      }
-    },
-    "documentIntelligenceKey": {
-      "type": "securestring",
-      "metadata": {
-        "description": "使用する Azure Document Intelligence アカウントのキー"
-      }
-    },
     "maxChunkTokenSize": {
       "type": "int",
       "defaultValue": 4096,
@@ -54,6 +43,23 @@
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2024-04-01-preview",
+      "name": "[variables('documentIntelligenceName')]",
+      "location": "eastus",
+      "sku": {
+        "name": "S0"
+      },
+      "kind": "FormRecognizer",
+      "properties": {
+        "customSubDomainName": "[variables('documentIntelligenceName')]",
+        "networkAcls": {
+          "defaultAction": "Allow"
+        },
+        "publicNetworkAccess": "Enabled"
+      }
+    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2022-05-01",
@@ -137,11 +143,11 @@
             },
             {
               "name": "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT",
-              "value": "[parameters('documentIntelligenceEndpoint')]"
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('documentIntelligenceName'))).endpoint]"
             },
             {
               "name": "AZURE_DOCUMENT_INTELLIGENCE_KEY",
-              "value": "[parameters('documentIntelligenceKey')]"
+              "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('documentIntelligenceName')), '2024-04-01-preview').key1]"
             },
             {
               "name": "MAX_CHUNK_TOKEN_SIZE",
@@ -172,6 +178,7 @@
         }
       ],
       "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('documentIntelligenceName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
         "[resourceId('Microsoft.Web/serverfarms', variables('appPlanName'))]"
